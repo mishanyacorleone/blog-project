@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Студенческий прогресс{% endblock %}
+
+{% block content %}
+<h1>Просмотр данных XML-файла</h1>
+
+{% if selected_file %}
+<p><strong>Выбранный файл:</strong> {{ selected_file }}</p>
+{% endif %}
+
+{% if data %}
+<form id="xmlForm">
+  <table class="table table-bordered table-striped mt-3" id="editableTable">
+      <thead>
+          <tr>
+              {% for header in headers %}
+                  <th>{{ header }}</th>
+              {% endfor %}
+          </tr>
+      </thead>
+      <tbody>
+          {% for row in data %}
+          <tr>
+              {% for value in row.values %}
+                <td contenteditable="true">{{ value }}</td>
+              {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+  </table>
+
+  <button type="button" id="saveBtn" class="btn btn-primary mt-3">Сохранить</button>
+</form>
+
+<script>
+document.getElementById('saveBtn').addEventListener('click', function() {
+    const table = document.getElementById('editableTable');
+    const headers = [...table.querySelectorAll('th')].map(th => th.textContent.trim());
+    const rows = [...table.querySelectorAll('tbody tr')].map(tr => {
+        const cells = [...tr.querySelectorAll('td')];
+        const obj = {};
+        headers.forEach((h, i) => obj[h] = cells[i].textContent.trim());
+        return obj;
+    });
+
+    fetch("{% url 'student_progress:save_xml' filename=selected_file %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify(rows)
+    })
+    .then(response => response.json())
+    .then(data => alert(data.message))
+    .catch(err => alert("Ошибка: " + err));
+});
+</script>
+
+{% else %}
+<p>Выберите файл для просмотра.</p>
+{% endif %}
+{% endblock %}

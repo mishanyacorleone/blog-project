@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Загрузка XML файла{% endblock %}
+
+{% block content %}
+<h1>Загрузить XML файл или добавить новую запись</h1>
+
+{% if message %}
+    <div class="alert alert-info">{{ message }}</div>
+{% endif %}
+
+<div class="card p-3 mb-4">
+    <form method="post" enctype="multipart/form-data" action="{% url 'student_progress:add_xml' %}">
+        {% csrf_token %}
+<!--        <div class="mb-3">-->
+<!--            <label for="xmlFile" class="form-label">Выберите XML-файл</label>-->
+<!--            <input type="file" name="xml_file" id="xmlFile" accept=".xml" class="form-control" required>-->
+<!--        </div>-->
+        {{ upload_form.as_p }}
+        <button type="submit" class="btn btn-success">Загрузить</button>
+    </form>
+</div>
+
+<div class="card p-3">
+    <h4>Добавить запись в файл <code>students.xml</code></h4>
+    <form method="post">
+        {% csrf_token %}
+        {{ grade_form.as_p }}
+        <button type="submit" class="btn btn-success">Добавить запись</button>
+    </form>
+</div>
+
+{% endblock %}

@@ -59,10 +59,7 @@ def index(request):
         'selected_categories': selected_list
     }
 
-    response = render(request, 'index.html', context)
-
-    if not request.COOKIES.get('language'):
-        response.set_cookie('language', 'ru', max_age=365*24*60*60)
+    response = render(request, 'blog_index.html', context)
 
     return response
 
@@ -75,13 +72,12 @@ def save_preferences(request):
         categories_str = ','.join(categories)
         encoded_categories = urllib.parse.quote(categories_str, safe='')
 
-        response = redirect('home')
+        response = redirect('blog:home')
 
         response.set_cookie('categories', encoded_categories, max_age=365*24*60*60)
-        response.set_cookie('language', language, max_age=365*24*60*60)
 
         messages.success(request, 'cookies success')
 
         return response
 
-    return redirect('home')
+    return redirect('blog:home')

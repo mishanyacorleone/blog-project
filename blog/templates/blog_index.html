@@ -28,7 +28,7 @@
 
         <div class="preferences-form">
             <h2>Настройки отображения</h2>
-            <form method="post" action="{% url 'save-preferences' %}">
+            <form method="post" action="{% url 'blog:save-preferences' %}">
                 {% csrf_token %}
                 <div class="form-group">
                     <label>Выберите категории для отображения:</label>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Главная страница</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'core/styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Добро пожаловать!</h1>
+        <ul>
+            <li><a href="{% url 'blog:home' %}">Перейти к блогу</a></li>
+            <li><a href="{% url 'student_progress:index' %}">Перейти к оценкам (XML)</a></li>
+        </ul>
+    </div>
+</body>
+</html>

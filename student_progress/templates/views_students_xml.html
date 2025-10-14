@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}XML файлы студентов{% endblock %}
+
+{% block content %}
+<h1>Список загруженных XML файлов</h1>
+
+{% if files %}
+    <ul class="list-group">
+        {% for file in files %}
+            <li class="list-group-item">
+                <a href="{% url 'student_progress:view_single_xml' file %}" target="_blank">
+                    {{ file }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Пока нет загруженных XML файлов.</p>
+{% endif %}
+{% endblock %}
