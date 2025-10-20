@@ -6,6 +6,7 @@ class GradeForm(forms.Form):
     student_name = forms.CharField(max_length=100, label="Имя студента", widget=forms.TextInput(attrs={'class': 'form-control'}))
     subject = forms.CharField(max_length=100, label="Предмет", widget=forms.TextInput(attrs={'class': 'form-control'}))
     grade = forms.IntegerField(min_value=2, max_value=5, label="Оценка", widget=forms.NumberInput(attrs={'class': 'form-control'}))
+    save_place = forms.ChoiceField(label='Куда сохранить файл?', choices=[('file', 'Сохранить в файл'), ('db', 'Сохранить в базу данных')], widget=forms.RadioSelect, initial='file')
 
     def clean_student_name(self):
         name = self.cleaned_data['student_name']

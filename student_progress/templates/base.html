@@ -26,6 +26,9 @@
                         <a class="nav-link {% if request.resolver_match.url_name == 'student_progress:views' %}active{% endif %}" href="{% url 'student_progress:views' %}">📄 XML файлы студентов</a>
                     </li>
                     <li class="nav-item">
+                        <a href="{% url 'student_progress:view_db' %}" class="nav-link {% if request.resolver_match.url_name == 'student_progress:view_db' %}active{% endif %}">Посмотреть базу данных</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.url_name == 'student_progress:add_xml' %}active{% endif %}" href="{% url 'student_progress:add_xml' %}">Добавить файл</a>
                     </li>
                 </ul>

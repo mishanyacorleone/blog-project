@@ -1,12 +1,12 @@
 import os
 import uuid
-from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.core.files.storage import FileSystemStorage
+from django.shortcuts import render, redirect
 from django.conf import settings
 from django.http import Http404, JsonResponse, HttpRequest, HttpResponse
 import xml.etree.ElementTree as ET
 from .forms import GradeForm, UploadXMLForm
+from .models import StudentGrade
 import json
 
 DATA_DIR = os.path.join(settings.MEDIA_ROOT, 'uploads')
@@ -36,6 +36,49 @@ def handle_uploaded_file(file):
     return is_xml
 
 
+def save_to_file(file_path: str, data: dict):
+    student_name = data['student_name']
+    subject = data['subject']
+    grade = str(data['grade'])
+
+    if not os.path.exists(file_path):
+        root = ET.Element('students')
+        tree = ET.ElementTree(root)
+        tree.write(file_path, encoding='utf-8', xml_declaration=True)
+
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+
+    student_elem = ET.SubElement(root, 'student')
+    ET.SubElement(student_elem, 'name').text = student_name
+    ET.SubElement(student_elem, 'subject').text = subject
+    ET.SubElement(student_elem, 'grade').text = grade
+
+    tree.write(STATIC_XML_FILE, encoding='utf-8', xml_declaration=True)
+
+
+def save_to_db(data: dict):
+
+    exists = StudentGrade.objects.filter(
+        student_name=data["student_name"],
+        subject=data["subject"],
+        grade=data["grade"]
+    ).exists()
+    print(exists)
+    if not exists:
+        StudentGrade.objects.create(
+            student_name=data["student_name"],
+            subject=data["subject"],
+            grade=data["grade"]
+        )
+        message = "Запись успешно создана"
+
+    else:
+        message = "Обнаружен дубликат. Запись не создана"
+    print(message)
+    return message
+
+
 def add_xml_file(request: HttpRequest):
     message = None
     grade_form = GradeForm()
@@ -56,24 +99,16 @@ def add_xml_file(request: HttpRequest):
         else:
             grade_form = GradeForm(request.POST)
             if grade_form.is_valid():
-                student_name = grade_form.cleaned_data['student_name']
-                subject = grade_form.cleaned_data['subject']
-                grade = str(grade_form.cleaned_data['grade'])
+                data = grade_form.cleaned_data
 
-                if not os.path.exists(STATIC_XML_FILE):
-                    root = ET.Element('students')
-                    tree = ET.ElementTree(root)
-                    tree.write(STATIC_XML_FILE, encoding='utf-8', xml_declaration=True)
+                if data['save_place'] == 'file':
+                    save_to_file(STATIC_XML_FILE, data)
+                else:
+                    message = save_to_db(data)
+                    if message == "Обнаружен дубликат. Запись не создана":
+                        print(111111)
+                        messages.warning(request, message)
 
-                tree = ET.parse(STATIC_XML_FILE)
-                root = tree.getroot()
-
-                student_elem = ET.SubElement(root, 'student')
-                ET.SubElement(student_elem, 'name').text = student_name
-                ET.SubElement(student_elem, 'subject').text = subject
-                ET.SubElement(student_elem, 'grade').text = grade
-
-                tree.write(STATIC_XML_FILE, encoding='utf-8', xml_declaration=True)
                 message = 'Запись успешно добавлена'
                 grade_form = GradeForm()
 
@@ -85,6 +120,17 @@ def add_xml_file(request: HttpRequest):
         'grade_form': grade_form,
         'message': message,
     })
+
+
+def view_db(request):
+    students = StudentGrade.objects.all()
+    print(StudentGrade.objects.all())
+    print(type(StudentGrade.objects.all()[0]))
+    for i in StudentGrade.objects.all():
+        print(i)
+        print(type(i))
+
+    return render(request, 'view_db.html', {'students': students})
 
 
 def view_single_xml(request, filename):
