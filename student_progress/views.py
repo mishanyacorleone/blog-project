@@ -105,11 +105,7 @@ def add_xml_file(request: HttpRequest):
                     save_to_file(STATIC_XML_FILE, data)
                 else:
                     message = save_to_db(data)
-                    if message == "Обнаружен дубликат. Запись не создана":
-                        print(111111)
-                        messages.warning(request, message)
 
-                message = 'Запись успешно добавлена'
                 grade_form = GradeForm()
 
             else:
@@ -124,12 +120,6 @@ def add_xml_file(request: HttpRequest):
 
 def view_db(request):
     students = StudentGrade.objects.all()
-    print(StudentGrade.objects.all())
-    print(type(StudentGrade.objects.all()[0]))
-    for i in StudentGrade.objects.all():
-        print(i)
-        print(type(i))
-
     return render(request, 'view_db.html', {'students': students})
 
 
@@ -192,6 +182,49 @@ def save_xml(request, filename):
 
         except Exception as ex:
             return JsonResponse({'message': f'Ошибка: {str(ex)}'}, status=500)
+
+
+def delete_grade(request, id):
+    if request.method == "POST":
+        try:
+            student = StudentGrade.objects.get(id=id)
+            student.delete()
+            return JsonResponse({"success": True})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+
+
+def update_all(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            updates = data.get("updates", [])
+
+            print(updates)
+
+            for item in updates:
+                record = StudentGrade.objects.get(id=item["id"])
+                form = GradeForm(item)
+
+                if "save_place" in form.fields:
+                    form.fields.pop("save_place")
+
+                errors_string = "\n"
+
+                for field, errors in form.errors.as_data().items():
+                    for error in errors:
+                        errors_string += f"{field}: {error.message}\n"
+
+                if form.is_valid():
+                    record.student_name = form.cleaned_data["student_name"]
+                    record.subject = form.cleaned_data["subject"]
+                    record.grade = form.cleaned_data["grade"]
+                    record.save()
+                    return JsonResponse({"success": True})
+
+                return JsonResponse({'success': False, 'error': errors_string})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
 
 
 def index(request):
