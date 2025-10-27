@@ -29,7 +29,8 @@ def handle_uploaded_file(file):
         is_xml = False
         return is_xml
 
-    file_path = os.path.join(DATA_DIR, name)
+    unique_filename = f"{str(uuid.uuid4())}.xml"
+    file_path = os.path.join(DATA_DIR, unique_filename)
     with open(file_path, 'wb+') as destination:
         for chunk in file.chunks():
             destination.write(chunk)
@@ -57,15 +58,18 @@ def save_to_file(file_path: str, data: dict):
     tree.write(STATIC_XML_FILE, encoding='utf-8', xml_declaration=True)
 
 
-def save_to_db(data: dict):
-
-    exists = StudentGrade.objects.filter(
+def check_dublicates(data: dict):
+    is_dublicate = StudentGrade.objects.filter(
         student_name=data["student_name"],
         subject=data["subject"],
         grade=data["grade"]
     ).exists()
-    print(exists)
-    if not exists:
+    return is_dublicate
+
+
+def save_to_db(data: dict):
+    is_dublicate = check_dublicates(data)
+    if not is_dublicate:
         StudentGrade.objects.create(
             student_name=data["student_name"],
             subject=data["subject"],
@@ -184,6 +188,29 @@ def save_xml(request, filename):
             return JsonResponse({'message': f'Ошибка: {str(ex)}'}, status=500)
 
 
+def ajax_search(request: HttpRequest):
+    query = request.GET.get("q", "").strip()
+    print(query)
+    if not query:
+        records = StudentGrade.objects.all()
+    else:
+        records = StudentGrade.objects.filter(
+            student_name__icontains=query
+        ) | StudentGrade.objects.filter(
+            subject__icontains=query
+        )
+
+    data = [{
+        "id": r.id,
+        "student_name": r.student_name,
+        "subject": r.subject,
+        "grade": r.grade,
+    } for r in records]
+    print(data)
+
+    return JsonResponse({"results": data})
+
+
 def delete_grade(request, id):
     if request.method == "POST":
         try:
@@ -205,7 +232,7 @@ def update_all(request):
             for item in updates:
                 record = StudentGrade.objects.get(id=item["id"])
                 form = GradeForm(item)
-
+                print(item)
                 if "save_place" in form.fields:
                     form.fields.pop("save_place")
 
@@ -219,8 +246,12 @@ def update_all(request):
                     record.student_name = form.cleaned_data["student_name"]
                     record.subject = form.cleaned_data["subject"]
                     record.grade = form.cleaned_data["grade"]
+                    is_dublicate = check_dublicates(item)
+                    if is_dublicate:
+                        return JsonResponse({"success": False, "error": "Обнаружен дубликат"})
                     record.save()
                     return JsonResponse({"success": True})
+
 
                 return JsonResponse({'success': False, 'error': errors_string})
         except Exception as e:

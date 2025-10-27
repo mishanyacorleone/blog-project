@@ -6,6 +6,10 @@
 <div class="container mt-4">
     <h2>Записи из базы данных</h2>
 
+    <div class="input-group mb-3">
+        <input type="text" id="searchInput" class="form-control" placeholder="Поиск по имени или предмету...">
+    </div>
+
     {% if students %}
         <table class="table table-striped table-bordered mt-3" id="grades-table">
             <thead class="table-dark">
@@ -16,7 +20,7 @@
                     <th>Действие</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="tableBody">
                 {% for student in students %}
                 <tr data-id="{{ student.id }}">
                     <td contenteditable="true" class="editable" data-field="student_name">{{ student.student_name }}</td>
@@ -40,6 +44,30 @@
 </div>
 
 <script>
+document.getElementById("searchInput").addEventListener("input", function() {
+    const query = this.value;
+
+    fetch(`{% url 'student_progress:ajax_search' %}?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById("tableBody");
+            tbody.innerHTML = "";
+
+            data.results.forEach(item => {
+                const row = document.createElement("tr");
+                row.setAttribute("data-id", item.id);
+                row.innerHTML = `
+                    <td contenteditable="true" class="editable" data-field="student_name">${item.student_name}</td>
+                    <td contenteditable="true" class="editable" data-field="subject">${item.subject}</td>
+                    <td contenteditable="true" class="editable" data-field="grade">${item.grade}</td>
+                    <td><button class="btn btn-danger btn-sm delete-btn">Удалить</button></td>
+                `;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(err => console.error("Ошибка при поиске:", err));
+});
+
 document.addEventListener("DOMContentLoaded", () => {
     const saveBtn = document.getElementById("save-changes");
     const table = document.getElementById("grades-table");
