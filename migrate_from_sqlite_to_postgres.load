@@ -1,0 +1,28 @@
+-- Загружаем данные из SQLite в PostgreSQL
+LOAD DATABASE
+     FROM sqlite:///tmp/db.sqlite3
+     INTO postgresql://${PGLOADER_DB_URL}
+
+-- Настройки для надёжной миграции
+WITH include drop, create tables, create indexes, reset sequences
+
+-- Оптимизация производительности
+SET maintenance_work_mem to '128MB',
+    work_mem to '12MB',
+    synchronous_commit to 'off'
+
+-- Конвертация типов (особенно важно для дат и времени)
+CAST type datetime to timestamptz using com.dimitri.pgloader.cast::timestamp-to-timestamptz,
+     type date to date,
+     type timestamp to timestamptz
+
+-- Исключаем таблицы, которые не нужно мигрировать (если есть)
+-- Например, auth_permission — она может быть перегенерирована
+EXCLUDING TABLE NAMES LIKE 'auth_permission',
+                  LIKE 'django_migrations',
+                  LIKE 'django_content_type'
+
+-- Если нужно исключить конкретные таблицы — добавь их сюда
+-- EXCLUDING TABLE NAMES LIKE 'your_table_name'
+
+;

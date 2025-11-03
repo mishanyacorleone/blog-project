@@ -19,6 +19,49 @@ pip install -r requirements.txt
 python manage.py runserver
 ``
 
+## Сборка Docker-контейнера
+
+Для того, чтобы запустить докер-контейнер необходимо сделать 
+
+``
+git clone
+``
+
+`` 
+docker-compose build 
+``
+
+``
+docker-compose up
+``
+
+В docker-compose.yml указаны значения переменных, которые не должны видеть пользователи. Заполните их в соответствии с вашими значениями и занесите в .env файл:
+```dotenv
+# .env
+
+# Django
+SECRET_KEY=ваш django secret-key
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+
+# PostgreSQL
+DB_NAME=название базы данных
+DB_USER=имя пользователя БД
+DB_PASSWORD=пароль пользователя БД
+DB_HOST=хост базы данных
+DB_PORT=порт базы данных
+
+# Для pgloader (внутри migrate-db)
+PGLOADER_DB_URL=ссылка на базу данных
+
+# Static & Media
+STATIC_URL=/static/
+STATIC_ROOT=/app/staticfiles
+MEDIA_URL=/media/
+MEDIA_ROOT=/app/uploads
+```
+
 После выполнения данных манипуляций у вас должен запуститься сервер на локалхосте (127.0.0.1:8000).
 
 Если возникнут вопросы - https://t.me/mishutqac
+
